@@ -1,102 +1,144 @@
-# CSE Tape + REPL (v0)
+# CSE Wire v1 (ESP32 / PlatformIO)
 
-Minimal, end-to-end vertical slice for a deterministic **Scenario Tape** runtime on ESP32-class hardware.
+This repository contains a **deterministic, brokerless host ⇄ device protocol** and minimal runtime for ESP32-class microcontrollers.
 
-Core loop:
+The goal is to provide a **replayable, simulatable, message-driven execution loop** suitable for constrained systems, testing, and uplink-style workflows.
 
-- Scenario source (tiny line-based format) → compiles into a Tape (binary)
-- Tape loads over UART (CSE Wire v1) → runs on-device (virtual clock default)
-- Device emits Doctor snapshots + a single Scenario Finished verdict
-- Same tape runs on hardware and in simulation
-
-This repo is intentionally scoped to the Theory of Constraints bottleneck:
-> **Scenario → Insight latency**
+This is **not** a messaging framework and **not** RTOS-based.
 
 ---
 
-## Repository Layout
+## What This Is
+
+- A framed UART wire protocol (**CSE Wire v1-lite**)
+- A minimal device dispatcher (PING / LOAD / RUN)
+- A host-side loader tool
+- A foundation for tape-based execution and diagnostics
+
+Everything is designed to be:
+- Deterministic
+- Explicitly framed (no stream parsing)
+- Replayable
+- Easy to bridge to higher-level systems later (e.g. ZMQ)
+
+---
+
+## What This Is Not
+
+- Not RTOS-dependent
+- Not async / threaded
+- Not a general-purpose message bus
+- Not optimized yet
+
+Those come **after** the core constraint is proven.
+
+---
+
+## Repository Structure
 
 ```
-cse-tape-repl/
-  README.md
-
-  docs/
-    01-architecture.md
-    02-wire-protocol-cse-wire-v1.md
-    03-tape-format-v0.md
-    04-scenario-compiler-input-v0.md
-    05-demo-holy-shit.md
-
-  device/
-    include/
-      cse_wire_v1.h
-      cse_tape_v0.h
-      cse_types.h
-    src/
-      cse_tape_interpreter.c
-      cse_wire_v1.c
-      stubs_platform.c
-    platformio.ini
-    README-device.md
-
-  host/
-    cse_uart_monitor.py
-    cse_scenario_compiler.py
-    cse_loader.py
-    requirements.txt
-    README-host.md
-
-  scenarios/
-    comms_window_minimal.scn
-    latency_smoke.scn
-    queue_overflow.scn
+.
+├── platformio.ini
+├── device/
+│   ├── include/
+│   │   └── cse_wire_v1.h
+│   └── src/
+│       ├── cse_wire_v1.c
+│       └── main.c
+├── host/
+│   └── cse_loader.py
+└── README.md
 ```
 
 ---
 
-## Quick Start (Host)
+## Build & Flash (PlatformIO)
+
+1. Install VS Code
+2. Install the PlatformIO extension
+3. Open this repository as a PlatformIO project
+4. Select your ESP32 environment
+5. Build and flash normally via PlatformIO
+
+> **Note:** Platform-specific UART hooks must be implemented:
+> - `cse_uart_write_all`
+> - `cse_uart_read_byte`
+>
+> These are intentionally left as thin wrappers so the protocol remains platform-agnostic.
+
+---
+
+## Host Tool (Python)
+
+The host loader communicates with the device over UART.
+
+### Requirements
+
+```
+pip install pyserial
+```
+
+### Usage
 
 ```bash
-cd host
-python -m venv .venv
-source .venv/bin/activate  # (Windows: .venv\Scripts\activate)
-pip install -r requirements.txt
-python cse_scenario_compiler.py ../scenarios/comms_window_minimal.scn -o comms_window_minimal.tape
+python host/cse_loader.py --port /dev/ttyUSB0 ping
+python host/cse_loader.py --port /dev/ttyUSB0 load 0x00001234 scenarios/example.tape
+python host/cse_loader.py --port /dev/ttyUSB0 run  0x00001234 --mode virtual
 ```
 
-Loader/monitor will work once `host/*` framing is implemented:
+Expected output:
 
-```bash
-python cse_loader.py --port /dev/ttyUSB0 load comms_window_minimal.tape
-python cse_loader.py --port /dev/ttyUSB0 run  0x00001234 --mode VIRTUAL
-python cse_uart_monitor.py /dev/ttyUSB0 115200
+```
+PONG
+LOAD_OK
+FINISHED scenario=0x00001234 result=FAIL t_end_ms=0
 ```
 
 ---
 
-## Quick Start (Device)
+## Protocol Overview (v1-lite)
 
-`device/src/cse_tape_interpreter.c` is a compilable skeleton once you implement the platform hooks:
+Frame format:
 
-- `bus_emit_event(event_type, payload, len)`
-- `pulse_config_set_*`
-- `pulse_doctor_emit_snapshot()` + `pulse_get_last_pressure_state(metric_id, &out)`
-- `notify_scenario_finished(&fin)` (serialize + send over CSE Wire v1)
+```
+[SOF0][SOF1][VER][TYPE][FLAGS][SEQ][PAYLEN][PAYLOAD...][CRC16]
+```
 
-See `device/src/stubs_platform.c` for placeholders.
+- Explicit framing
+- Length-prefixed payloads
+- CRC-16/CCITT-FALSE
+- No implicit state
+
+Current message set:
+- `PING / PONG`
+- `LOAD / LOAD_OK`
+- `RUN / FINISHED`
+- `ERR`
 
 ---
 
-## What’s Implemented vs Stubbed
+## Development Notes
 
-Implemented:
-- Specs: wire protocol, tape format, compiler input format
-- Device: tape interpreter skeleton + stubs
+- Do **not** refactor the wire protocol without versioning
+- Do **not** introduce RTOS dependencies
+- Do **not** add background tasks or threading
 
-Stubbed:
-- UART framing encode/decode (device + host)
-- CRC16/CRC32 routines (or use existing libs)
-- Real Pulse/Doctor integration
-- DATAREF support (later)
+This project intentionally proves the **minimum viable execution loop** first.
 
-License: pick later.
+---
+
+## Next Planned Steps
+
+- Chunked LOAD with ACK/NACK
+- Virtual clock facade
+- Diagnostic “Doctor” message stream
+- Tape compiler / DSL
+- ZMQ gateway (host-side)
+
+---
+
+## License
+
+This project is licensed under the GNU Lesser General Public License v3.0 (LGPL-3.0).
+
+Commercial licensing options may be available.

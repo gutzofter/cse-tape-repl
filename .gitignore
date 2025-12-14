@@ -1,0 +1,6 @@
+host/.venv/
+*.tape
+*.bin
+*.elf
+.pio/
+.DS_Store

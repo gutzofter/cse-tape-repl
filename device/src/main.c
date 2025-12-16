@@ -92,3 +92,11 @@ void cse_wire_loop_once(void) {
       break;
   }
 }
+
+void setup(void) {
+  // TODO: initialize UART pins and baud for cse_wire_v1
+}
+
+void loop(void) {
+  cse_wire_loop_once();
+}

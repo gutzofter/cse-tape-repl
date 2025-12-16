@@ -41,3 +41,6 @@ typedef struct {
   uint8_t  reserved;
   uint16_t length;
 } __attribute__((packed)) cfg_kv_t;
+
+void cse_tape_run_v0(const uint8_t *tape, uint32_t tape_len);
+void cse_tape_run(const uint8_t *tape, uint32_t tape_len);

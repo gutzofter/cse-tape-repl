@@ -1,10 +1,24 @@
 #include "cse_types.h"
+#include "cse_wire_v1.h"
 #include <stdbool.h>
 #include <stdint.h>
 
 bool bus_emit_event(uint16_t event_type, const uint8_t *payload, uint16_t payload_len) {
   (void)event_type; (void)payload; (void)payload_len;
   return true;
+}
+
+bool cse_uart_write_all(const uint8_t* buf, uint16_t n) {
+  // TODO: wire this to your board's UART write API
+  (void)buf; (void)n;
+  return true;
+}
+
+bool cse_uart_read_byte(uint8_t* out, uint32_t timeout_ms) {
+  // TODO: wire this to your board's UART read API
+  (void)timeout_ms;
+  if (out) *out = 0;
+  return false;
 }
 bool pulse_config_set_u32(uint16_t key, uint32_t v) { (void)key; (void)v; return true; }
 bool pulse_config_set_u16(uint16_t key, uint16_t v) { (void)key; (void)v; return true; }

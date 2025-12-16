@@ -87,3 +87,7 @@ void cse_tape_run_v0(const uint8_t *tape, uint32_t tape_len) {
   fin.primary_state = (uint8_t)rt.primary_state;
   notify_scenario_finished(&fin);
 }
+
+void cse_tape_run(const uint8_t *tape, uint32_t tape_len) {
+  cse_tape_run_v0(tape, tape_len);
+}

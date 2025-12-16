@@ -3,6 +3,8 @@
 #include "cse_wire_v1.h"
 #include <string.h>
 
+void cse_emit_u32(uint16_t event_id, uint32_t value);
+
 static uint32_t read_u32_le(const uint8_t *p) {
     return (uint32_t)p[0]
          | ((uint32_t)p[1] << 8)

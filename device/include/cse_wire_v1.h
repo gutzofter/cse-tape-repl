@@ -12,6 +12,7 @@ typedef enum : uint8_t {
   MSG_PING     = 0x01,
   MSG_LOAD     = 0x02,
   MSG_RUN      = 0x03,
+  MSG_EVENT    = 0x10,
 
   MSG_PONG     = 0x81,
   MSG_LOAD_OK  = 0x82,

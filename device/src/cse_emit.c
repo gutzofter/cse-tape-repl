@@ -1,4 +1,5 @@
 #include "cse_wire_v1.h"
+#include "cse_emit.h"
 
 void cse_emit_u32(uint16_t event_id, uint32_t value) {
     // Payload: [u16 event_id][u32 value]

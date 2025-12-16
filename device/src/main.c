@@ -1,10 +1,8 @@
 #include "cse_wire_v1.h"
 #include "cse_types.h"
+#include "cse_tape_v0.h"
 #include <stdint.h>
 #include <stdbool.h>
-
-// Adjust to your actual tape runner symbol
-void cse_tape_run(const uint8_t* tape, uint32_t len);
 
 enum {
   MAX_TAPE_BYTES = 2048,

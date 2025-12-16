@@ -3,22 +3,41 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#if defined(ARDUINO)
+#include <Arduino.h>
+#endif
+
 bool bus_emit_event(uint16_t event_type, const uint8_t *payload, uint16_t payload_len) {
   (void)event_type; (void)payload; (void)payload_len;
   return true;
 }
 
 bool cse_uart_write_all(const uint8_t* buf, uint16_t n) {
-  // TODO: wire this to your board's UART write API
+#if defined(ARDUINO)
+  // Write all bytes; return true if the full buffer is queued.
+  return Serial.write(buf, n) == n;
+#else
   (void)buf; (void)n;
-  return true;
+  return false;
+#endif
 }
 
 bool cse_uart_read_byte(uint8_t* out, uint32_t timeout_ms) {
-  // TODO: wire this to your board's UART read API
+#if defined(ARDUINO)
+  const uint32_t t0 = millis();
+  while (millis() - t0 < timeout_ms) {
+    if (Serial.available() > 0) {
+      if (out) *out = (uint8_t)Serial.read();
+      return true;
+    }
+    yield();
+  }
+  return false;
+#else
   (void)timeout_ms;
   if (out) *out = 0;
   return false;
+#endif
 }
 bool pulse_config_set_u32(uint16_t key, uint32_t v) { (void)key; (void)v; return true; }
 bool pulse_config_set_u16(uint16_t key, uint16_t v) { (void)key; (void)v; return true; }

@@ -92,7 +92,9 @@ void cse_wire_loop_once(void) {
 }
 
 void setup(void) {
-  // TODO: initialize UART pins and baud for cse_wire_v1
+#if defined(ARDUINO)
+  Serial.begin(115200);
+#endif
 }
 
 void loop(void) {
